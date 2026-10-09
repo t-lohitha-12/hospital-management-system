@@ -40,6 +40,7 @@ import AdminSchedulingPage from './pages/admin/AdminSchedulingPage';
 import AuditLogPage from './pages/admin/AuditLogPage';
 import HelpPage from './pages/HelpPage';
 import LicenseManagementPage from './pages/admin/LicenseManagementPage';
+import SecurityLabPage from './pages/SecurityLabPage';
 
 
 function App() {
@@ -67,6 +68,7 @@ function App() {
                 {/* Public Routes with the AppLayout */}
                 <Route path="/" element={<AppLayout><WelcomePage /></AppLayout>} />
                 <Route path="/learn-more" element={<AppLayout><LearnMorePage /></AppLayout>} />
+                <Route path="/security-lab" element={<AppLayout><SecurityLabPage /></AppLayout>} />
 
                 {/* Auth Routes (no layout) */}
                 <Route path="/login" element={<LoginPage />} />

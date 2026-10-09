@@ -28,16 +28,22 @@ const Header = ({ theme, setTheme }) => {
           </div>
 
           {/* Right Side: Pushed to the end */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => navigate('/security-lab')}
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 text-white px-3.5 py-2 rounded-lg font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-cyan-500/20 hover:opacity-95 transition-all flex items-center gap-1.5 border border-cyan-400/30"
+            >
+              <span>⚡</span> IEEE Security Lab
+            </button>
             <button
               onClick={() => navigate('/login')}
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors text-sm"
             >
               Sign In
             </button>
             <button
               onClick={() => navigate('/register')}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
             >
               Register
             </button>
