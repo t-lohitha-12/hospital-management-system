@@ -307,7 +307,7 @@ export default function SecurityLabPage() {
 
               <div style={{ marginBottom: 16 }}>
                 <div style={sectionLabel}>Raw Executed Query</div>
-                <div style={{ padding: '10px 13px', background: '#1e293b', borderRadius: 8, fontFamily: 'monospace', fontSize: 11.5, color: '#f1f5f9', overflowX: 'auto', border: '1px solid #334155' }}>
+                <div style={{ padding: '10px 13px', background: '#1e293b', borderRadius: 8, fontFamily: 'monospace', fontSize: 11.5, color: '#f1f5f9', whiteSpace: 'pre-wrap', wordBreak: 'break-all', border: '1px solid #334155' }}>
                   <code>{withoutData?.executed_query || `SELECT * FROM users_user WHERE email = '${customPayload}'`}</code>
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function SecurityLabPage() {
 
               <div style={{ marginBottom: 16 }}>
                 <div style={sectionLabel}>Parameterized Query (Normalized)</div>
-                <div style={{ padding: '10px 13px', background: '#1e293b', borderRadius: 8, fontFamily: 'monospace', fontSize: 11.5, color: '#a7f3d0', overflowX: 'auto', border: '1px solid #334155' }}>
+                <div style={{ padding: '10px 13px', background: '#1e293b', borderRadius: 8, fontFamily: 'monospace', fontSize: 11.5, color: '#a7f3d0', whiteSpace: 'pre-wrap', wordBreak: 'break-all', border: '1px solid #334155' }}>
                   <code>{withData?.executed_query || 'SELECT id, full_name, email, role FROM users_user WHERE email = %s'}</code>
                 </div>
                 {withData?.bound_parameter && (
