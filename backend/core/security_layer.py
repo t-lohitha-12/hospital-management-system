@@ -196,6 +196,7 @@ class SentinDBInterceptor:
                 'security_score': 'F (PRIVILEGE ESCALATION)',
                 'user_role': user_role,
                 'target_resource': target_resource,
+                'executed_query': f"SELECT * FROM securitylab_{target_resource.replace('_', '')}_without_layer",
                 'access_granted': True,
                 'leaked_records': real_confidential_data,
                 'latency_ms': latency,
@@ -214,6 +215,7 @@ class SentinDBInterceptor:
                     'security_score': 'A+ (IMMUNE)',
                     'user_role': user_role,
                     'target_resource': target_resource,
+                    'executed_query': f"SELECT * FROM securitylab_{target_resource.replace('_', '')}_with_layer",
                     'access_granted': False,
                     'leaked_records': [],
                     'latency_ms': latency,
@@ -231,6 +233,7 @@ class SentinDBInterceptor:
                     'security_score': 'A+ (IMMUNE)',
                     'user_role': user_role,
                     'target_resource': target_resource,
+                    'executed_query': f"SELECT * FROM securitylab_{target_resource.replace('_', '')}_with_layer",
                     'access_granted': True,
                     'leaked_records': real_confidential_data,
                     'latency_ms': latency,
@@ -251,9 +254,10 @@ class SentinDBInterceptor:
                 'security_status': 'UNAUTHENTICATED_ACCESS_ALLOWED',
                 'security_score': 'F (BROKEN AUTH)',
                 'token_present': False,
+                'executed_query': "SELECT * FROM users_without_layer; SELECT * FROM appointments_without_layer;",
                 'data_exposed': [
-                    {'table': 'users_user', 'rows_exposed': 15, 'sensitive_fields': ['password_hash', 'phone_number', 'role']},
-                    {'table': 'appointments_appointment', 'rows_exposed': 42, 'sensitive_fields': ['medical_problem', 'patient_id']}
+                    {'table': 'users_without_layer', 'rows_exposed': 15, 'sensitive_fields': ['password_hash', 'phone_number', 'role']},
+                    {'table': 'appointments_without_layer', 'rows_exposed': 42, 'sensitive_fields': ['medical_problem', 'patient_id']}
                 ],
                 'latency_ms': latency,
                 'pipeline_telemetry': [
@@ -269,6 +273,7 @@ class SentinDBInterceptor:
                 'security_status': 'UNAUTHENTICATED_SESSION_QUARANTINED',
                 'security_score': 'A+ (IMMUNE)',
                 'token_present': False,
+                'executed_query': "[CONNECTION DROPPED BEFORE QUERY EXECUTION]",
                 'data_exposed': [],
                 'latency_ms': latency,
                 'pipeline_telemetry': [
