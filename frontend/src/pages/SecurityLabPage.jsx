@@ -1,66 +1,134 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  ShieldCheck, ShieldAlert, Zap, Terminal, Database, Lock, Unlock, 
+  ShieldCheck, ShieldAlert, Zap, Terminal, Database, Lock, 
   AlertTriangle, CheckCircle2, XCircle, RefreshCw, Cpu, Activity, 
-  ChevronRight, Award, Flame, UserCheck, KeyRound, Sparkles
+  Award, Flame, UserCheck, KeyRound, Sparkles, HelpCircle, Layers, Eye
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 export default function SecurityLabPage() {
   const [activeScenario, setActiveScenario] = useState('sqli');
-  const [securityToggle, setSecurityToggle] = useState(true); // Layer toggle
-  const [comparisonMode, setComparisonMode] = useState(true); // Split screen mode
+  const [comparisonMode, setComparisonMode] = useState(true);
   const [userRole, setUserRole] = useState('patient');
   const [customPayload, setCustomPayload] = useState("' OR '1'='1");
   const [loading, setLoading] = useState(false);
   const [telemetryData, setTelemetryData] = useState(null);
+  const [selectedCaseInfo, setSelectedCaseInfo] = useState(null);
 
   // Preset attack vectors for instant judging demos
   const sqliPresets = [
-    { label: "Boolean Bypass", payload: "' OR '1'='1" },
-    { label: "Admin Comment Exploit", payload: "admin' --" },
-    { label: "Union Data Exfiltration", payload: "' UNION SELECT id, email, password, role FROM users_user --" },
-    { label: "Clean / Safe Input", payload: "patient.jane@example.com" }
+    { 
+      label: "Case 1: Tautology / Boolean Bypass", 
+      payload: "' OR '1'='1",
+      mechanism: "Forces the SQL WHERE clause to evaluate to TRUE for every row in the table.",
+      dbImpact: "Dumps all records regardless of user input validation."
+    },
+    { 
+      label: "Case 2: Union Data Exfiltration", 
+      payload: "' UNION SELECT id, email, password, role FROM users_user --",
+      mechanism: "Appends a secondary SELECT query to extract hidden columns (password hashes, admin credentials).",
+      dbImpact: "Exfiltrates sensitive authentication hashes and role columns."
+    },
+    { 
+      label: "Case 3: Admin Auth Comment Hijack", 
+      payload: "admin@hospital.com' --",
+      mechanism: "Uses SQL comment tokens (--) to truncate the password verification portion of the query.",
+      dbImpact: "Logs into the admin account without providing any password."
+    },
+    { 
+      label: "Case 4: Stacked Query Attack", 
+      payload: "'; DROP TABLE test_patients; --",
+      mechanism: "Injects a semicolon to execute a second malicious statement after the first query.",
+      dbImpact: "Can result in destructive DROP, TRUNCATE, or UPDATE table commands."
+    },
+    { 
+      label: "Case 5: Safe / Legitimate Query", 
+      payload: "patient.jane@example.com",
+      mechanism: "Standard alphanumeric input with no syntax alteration tokens.",
+      dbImpact: "Executes normally and returns only the single matching patient profile."
+    }
   ];
 
   const privilegePresets = [
-    { label: "Admin Audit Logs", payload: "admin_audit_logs", targetRole: "patient" },
-    { label: "Doctor Financial Payouts", payload: "doctor_earnings", targetRole: "patient" },
-    { label: "System Encryption Config", payload: "system_settings", targetRole: "doctor" },
-    { label: "Patient Medical History (Legitimate)", payload: "patient_medical_history", targetRole: "patient" }
+    { 
+      label: "Case 1: Patient accessing Admin Audit Logs", 
+      payload: "admin_audit_logs", 
+      targetRole: "patient",
+      mechanism: "Low-privilege user attempting to read confidential database transaction history.",
+      dbImpact: "Breach of HIPAA & audit integrity."
+    },
+    { 
+      label: "Case 2: Patient accessing Doctor Payouts", 
+      payload: "doctor_earnings", 
+      targetRole: "patient",
+      mechanism: "Lateral privilege creep attempting to read doctor financial compensation.",
+      dbImpact: "Exposes doctor bank accounts & salary data."
+    },
+    { 
+      label: "Case 3: Doctor accessing System Encryption Keys", 
+      payload: "system_settings", 
+      targetRole: "doctor",
+      mechanism: "Doctor role attempting vertical escalation to system cryptographic secrets.",
+      dbImpact: "Potential system-wide token forgery risk."
+    },
+    { 
+      label: "Case 4: Legitimate Access (Patient -> Medical History)", 
+      payload: "patient_medical_history", 
+      targetRole: "patient",
+      mechanism: "Subject role matches resource classification matrix.",
+      dbImpact: "Access granted within normal authorization boundary."
+    }
   ];
 
   const unauthPresets = [
-    { label: "Anonymous DB Connection", payload: "SELECT * FROM users_user" },
-    { label: "Direct Table Query Bypass", payload: "GET /api/raw-db/appointments" }
+    { 
+      label: "Case 1: Anonymous Raw DB Socket Connection", 
+      payload: "SELECT * FROM users_user",
+      mechanism: "Bypasses Application JWT Middleware to connect directly to PostgreSQL pooler.",
+      dbImpact: "Direct unauthenticated table leakage."
+    },
+    { 
+      label: "Case 2: Forged / Expired Query Token", 
+      payload: "GET /api/raw-db/appointments?id=1",
+      mechanism: "Sends forged cryptographic signature in query header.",
+      dbImpact: "Unauthorized appointment record exposure."
+    }
   ];
 
   // Auto-set payload on scenario switch
   const handleScenarioChange = (scenario) => {
     setActiveScenario(scenario);
-    if (scenario === 'sqli') setCustomPayload("' OR '1'='1");
-    if (scenario === 'privilege_creep') setCustomPayload('admin_audit_logs');
-    if (scenario === 'unauth_access') setCustomPayload('SELECT * FROM users_user');
+    if (scenario === 'sqli') {
+      setCustomPayload("' OR '1'='1");
+      setSelectedCaseInfo(sqliPresets[0]);
+    } else if (scenario === 'privilege_creep') {
+      setCustomPayload('admin_audit_logs');
+      setSelectedCaseInfo(privilegePresets[0]);
+    } else if (scenario === 'unauth_access') {
+      setCustomPayload('SELECT * FROM users_user');
+      setSelectedCaseInfo(unauthPresets[0]);
+    }
   };
 
-  const runSimulation = async () => {
+  const runSimulation = async (payloadToRun, roleToRun) => {
+    const targetPayload = payloadToRun !== undefined ? payloadToRun : customPayload;
+    const targetRole = roleToRun !== undefined ? roleToRun : userRole;
+    
     setLoading(true);
     try {
       const response = await axiosInstance.post('/api/core/security-lab/simulate/', {
         scenario: activeScenario,
-        payload: customPayload,
-        user_role: userRole,
-        // if comparison mode, pass undefined to get both side-by-side
-        security_enabled: comparisonMode ? undefined : securityToggle
+        payload: targetPayload,
+        user_role: targetRole
       });
       setTelemetryData(response.data);
       toast.success("Threat simulation executed with live telemetry!");
     } catch (error) {
       console.error("Simulation error", error);
       // Fallback local simulation in case backend is waking up from sleep
-      setTelemetryData(generateFallbackTelemetry(activeScenario, customPayload, userRole));
+      setTelemetryData(generateFallbackTelemetry(activeScenario, targetPayload, targetRole));
       toast("Rendering local Zero-Trust simulation", { icon: '⚡' });
     } finally {
       setLoading(false);
@@ -69,19 +137,20 @@ export default function SecurityLabPage() {
 
   // Run initial simulation on mount
   useEffect(() => {
-    runSimulation();
-  }, [activeScenario]);
+    handleScenarioChange('sqli');
+    runSimulation("' OR '1'='1", 'patient');
+  }, []);
 
   // Fallback simulator for offline / rapid demo resilience
   const generateFallbackTelemetry = (scenario, payload, role) => {
     if (scenario === 'sqli') {
-      const isAttack = payload.includes("'") || payload.includes("--") || payload.includes("UNION") || payload.includes("OR");
+      const isAttack = payload.includes("'") || payload.includes("--") || payload.includes("UNION") || payload.includes("OR") || payload.includes(";");
       return {
         scenario: 'sqli',
         input_payload: payload,
         without_layer: {
           mode: 'VULNERABLE (Layer: OFF)',
-          security_status: isAttack ? 'BREACH_DETECTED' : 'QUERY_OK',
+          security_status: isAttack ? 'BREACH_DETECTED (AST HIJACKED)' : 'QUERY_OK',
           security_score: isAttack ? 'F (CRITICAL)' : 'B (UNPROTECTED)',
           executed_query: `SELECT id, full_name, email, role FROM users_user WHERE email = '${payload}'`,
           records_leaked_count: isAttack ? 4 : 1,
@@ -93,8 +162,8 @@ export default function SecurityLabPage() {
           latency_ms: 12.4,
           pipeline_telemetry: [
             '⚠️ [Application Layer] Raw string concatenation performed.',
-            '⚠️ [DBMS Driver] Direct string sent without parameter binding.',
-            '❌ [Breach Alert] Syntax hijacking succeeded. Database rows exfiltrated.'
+            '⚠️ [DBMS Driver] String directly dispatched without parameter binding.',
+            '❌ [Breach Alert] Syntax tree altered by user input. All rows dumped.'
           ]
         },
         with_layer: {
@@ -109,13 +178,13 @@ export default function SecurityLabPage() {
           latency_ms: 0.8,
           pipeline_telemetry: [
             isAttack ? '🔍 [AST Tokenizer] High-risk SQL alteration syntax intercepted.' : '🔍 [AST Tokenizer] Input verified clean.',
-            '🛡️ [SentinDB Gate] Query normalized into parameterized prepared statement.',
+            '🛡️ [SentinDB Gate] Abstract Syntax Tree alteration blocked.',
+            '🔒 [Parameterizer] Query normalized into parameterized prepared statement.',
             '✅ [Defense Success] Zero data leakage. Threat logged to security audit stream.'
           ]
         }
       };
     }
-    // Fallback for privilege creep
     return {
       scenario: 'privilege_creep',
       input_payload: payload,
@@ -160,47 +229,43 @@ export default function SecurityLabPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 selection:bg-cyan-500 selection:text-black">
-      {/* Top IEEE Banner */}
+      {/* Top IEEE Header Banner */}
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 bg-gradient-to-r from-blue-900/40 via-indigo-950/60 to-purple-900/40 border border-blue-500/30 rounded-2xl backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-900 border border-cyan-500/30 rounded-2xl backdrop-blur-xl shadow-2xl">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider rounded-full border border-blue-400/30 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+            <div className="flex flex-wrap items-center gap-2.5 mb-2">
+              <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider rounded-full border border-cyan-400/30 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
                 IEEE SMC Society • Query Quest 2026
               </span>
               <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded-full border border-emerald-400/30">
-                Live Interactive Lab
+                Core Area: Database Security
               </span>
             </div>
-            <h1 className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-white to-cyan-300">
+            <h1 className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-white to-blue-300">
               SentinDB: Zero-Trust Database Defense Layer
             </h1>
             <p className="text-slate-400 text-sm mt-1">
-              Real-time Neutralization of SQL Injection, Privilege Creep, and Unauthenticated Access.
+              Topic: Neutralizing SQL Injection, Privilege Creep, and Unauthenticated Database Access.
             </p>
           </div>
 
-          {/* Master Comparison Switch */}
-          <div className="flex items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-700">
+          <div className="flex items-center gap-3 bg-slate-900/90 p-2 rounded-xl border border-slate-700">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Demo Mode:</span>
             <button
               onClick={() => setComparisonMode(!comparisonMode)}
-              className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
-                comparisonMode 
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25' 
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
+              className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-lg shadow-cyan-500/25 flex items-center gap-2"
             >
               <Activity className="w-4 h-4" />
-              {comparisonMode ? 'Split-Screen Comparison' : 'Single Mode'}
+              Side-by-Side Dual Telemetry
             </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Scenario Selection Tabs */}
+        
+        {/* 3 Pillar Selection Tabs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => handleScenarioChange('sqli')}
@@ -214,7 +279,7 @@ export default function SecurityLabPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Pillar 1</span>
               <Flame className={`w-5 h-5 ${activeScenario === 'sqli' ? 'text-blue-400' : 'text-slate-500'}`} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">SQL Injection (SQLi)</h3>
+            <h3 className="text-base font-bold text-white mb-1">SQL Injection (SQLi)</h3>
             <p className="text-xs text-slate-400">AST Lexical Tokenization vs. Raw Query String Concatenation.</p>
           </button>
 
@@ -230,8 +295,8 @@ export default function SecurityLabPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-purple-400">Pillar 2</span>
               <UserCheck className={`w-5 h-5 ${activeScenario === 'privilege_creep' ? 'text-purple-400' : 'text-slate-500'}`} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Privilege Creep & Escalation</h3>
-            <p className="text-xs text-slate-400">Dynamic ABAC Context Validation vs. Over-Permissive Static RBAC.</p>
+            <h3 className="text-base font-bold text-white mb-1">Privilege Creep & Escalation</h3>
+            <p className="text-xs text-slate-400">Dynamic ABAC Context Validation vs. Static RBAC Accumulation.</p>
           </button>
 
           <button
@@ -246,34 +311,37 @@ export default function SecurityLabPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Pillar 3</span>
               <KeyRound className={`w-5 h-5 ${activeScenario === 'unauth_access' ? 'text-emerald-400' : 'text-slate-500'}`} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Unauthenticated Direct Access</h3>
+            <h3 className="text-base font-bold text-white mb-1">Unauthenticated Direct Access</h3>
             <p className="text-xs text-slate-400">Cryptographic Session Gatekeeper vs. Open Connection Pooling.</p>
           </button>
         </div>
 
-        {/* Attack Console & Presets Panel */}
-        <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl backdrop-blur-xl">
+        {/* Interactive Attack Preset Buttons */}
+        <div className="p-6 bg-slate-900/90 border border-slate-800 rounded-2xl backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Terminal className="w-5 h-5 text-cyan-400" />
-                Live Attack Payload Injector
+                Select Threat Scenario / Exploit Vector
               </h2>
               <p className="text-xs text-slate-400">
-                Select preset exploit vectors or type your own custom SQL query / parameter payload to test.
+                Click any case below to load the real-world attack payload and execute the simulation.
               </p>
             </div>
 
             {/* Role Switcher for Privilege Creep */}
             {activeScenario === 'privilege_creep' && (
               <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-lg border border-purple-500/30">
-                <span className="text-xs text-purple-300 font-semibold px-2">Simulated User Role:</span>
+                <span className="text-xs text-purple-300 font-semibold px-2">Active Session Role:</span>
                 {['patient', 'doctor', 'admin'].map((role) => (
                   <button
                     key={role}
-                    onClick={() => setUserRole(role)}
+                    onClick={() => {
+                      setUserRole(role);
+                      runSimulation(customPayload, role);
+                    }}
                     className={`px-3 py-1 rounded text-xs font-bold capitalize transition-all ${
-                      userRole === role ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                      userRole === role ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {role}
@@ -283,16 +351,25 @@ export default function SecurityLabPage() {
             )}
           </div>
 
-          {/* Quick Attack Presets */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-xs font-semibold text-slate-400 flex items-center mr-2">Quick Presets:</span>
+          {/* Preset Buttons Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-5">
             {activeScenario === 'sqli' && sqliPresets.map((preset, idx) => (
               <button
                 key={idx}
-                onClick={() => setCustomPayload(preset.payload)}
-                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
+                onClick={() => {
+                  setCustomPayload(preset.payload);
+                  setSelectedCaseInfo(preset);
+                  runSimulation(preset.payload, userRole);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  customPayload === preset.payload 
+                    ? 'bg-cyan-950/50 border-cyan-500 text-cyan-200 shadow-md ring-1 ring-cyan-400' 
+                    : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
               >
-                {preset.label}: <span className="text-slate-400">{preset.payload}</span>
+                <div className="font-bold text-xs text-white mb-1">{preset.label}</div>
+                <div className="font-mono text-[11px] text-cyan-400 truncate mb-1">Payload: {preset.payload}</div>
+                <div className="text-[10px] text-slate-400 line-clamp-2">{preset.mechanism}</div>
               </button>
             ))}
 
@@ -302,42 +379,60 @@ export default function SecurityLabPage() {
                 onClick={() => {
                   setCustomPayload(preset.payload);
                   setUserRole(preset.targetRole);
+                  setSelectedCaseInfo(preset);
+                  runSimulation(preset.payload, preset.targetRole);
                 }}
-                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-mono text-purple-300 hover:border-purple-400 transition-colors"
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  customPayload === preset.payload && userRole === preset.targetRole
+                    ? 'bg-purple-950/50 border-purple-500 text-purple-200 shadow-md ring-1 ring-purple-400' 
+                    : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
               >
-                {preset.label}
+                <div className="font-bold text-xs text-white mb-1">{preset.label}</div>
+                <div className="font-mono text-[11px] text-purple-400 truncate mb-1">Target: {preset.payload}</div>
+                <div className="text-[10px] text-slate-400 line-clamp-2">{preset.mechanism}</div>
               </button>
             ))}
 
             {activeScenario === 'unauth_access' && unauthPresets.map((preset, idx) => (
               <button
                 key={idx}
-                onClick={() => setCustomPayload(preset.payload)}
-                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-mono text-emerald-300 hover:border-emerald-400 transition-colors"
+                onClick={() => {
+                  setCustomPayload(preset.payload);
+                  setSelectedCaseInfo(preset);
+                  runSimulation(preset.payload, userRole);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  customPayload === preset.payload 
+                    ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200 shadow-md ring-1 ring-emerald-400' 
+                    : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
               >
-                {preset.label}
+                <div className="font-bold text-xs text-white mb-1">{preset.label}</div>
+                <div className="font-mono text-[11px] text-emerald-400 truncate mb-1">Request: {preset.payload}</div>
+                <div className="text-[10px] text-slate-400 line-clamp-2">{preset.mechanism}</div>
               </button>
             ))}
           </div>
 
-          {/* Input & Execution Bar */}
+          {/* Custom Input Bar */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-grow relative">
               <input
                 type="text"
                 value={customPayload}
                 onChange={(e) => setCustomPayload(e.target.value)}
-                placeholder="Enter SQL payload or target asset..."
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono text-cyan-300 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+                placeholder="Type custom SQL injection string or payload..."
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
               />
             </div>
             <button
-              onClick={runSimulation}
+              onClick={() => runSimulation(customPayload, userRole)}
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all"
             >
               {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              Execute Threat Simulation
+              Execute Simulation
             </button>
           </div>
         </div>
@@ -351,71 +446,71 @@ export default function SecurityLabPage() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-red-950/20 border-2 border-red-500/40 rounded-2xl backdrop-blur-xl shadow-2xl relative overflow-hidden"
+            className="p-6 bg-red-950/20 border-2 border-red-500/40 rounded-2xl backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-            
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-red-500/20">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-red-500/20 rounded-lg text-red-400 border border-red-500/30">
-                  <ShieldAlert className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-red-400">Baseline System</span>
-                  <h3 className="text-lg font-extrabold text-red-200">WITHOUT OUR LAYER (VULNERABLE)</h3>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-red-500/20 text-red-300 font-mono text-xs font-bold rounded-full border border-red-500/30">
-                Score: {withoutData?.security_score || 'F (CRITICAL)'}
-              </span>
-            </div>
-
-            {/* Status Alert Box */}
-            <div className="p-3 bg-red-900/30 border border-red-600/40 rounded-xl mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-red-300 text-xs font-semibold">
-                <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span>Status: <strong className="text-white font-mono">{withoutData?.security_status || 'BREACH_DETECTED'}</strong></span>
-              </div>
-              <span className="text-[11px] font-mono text-red-400">Latency: {withoutData?.latency_ms || '14.2'}ms</span>
-            </div>
-
-            {/* Executed Query / Request */}
-            <div className="mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Raw Query Sent to DBMS:</span>
-              <div className="p-3 bg-slate-950/90 border border-red-900/50 rounded-xl font-mono text-xs text-red-300 overflow-x-auto">
-                <code>{withoutData?.executed_query || `SELECT * FROM users_user WHERE email = '${customPayload}'`}</code>
-              </div>
-            </div>
-
-            {/* Leaked Records Table */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  Exfiltrated / Leaked Database Rows: ({withoutData?.leaked_records?.length || 0})
-                </span>
-                <span className="text-[10px] text-red-400 uppercase font-semibold">Data Breach Active</span>
-              </div>
-
-              <div className="bg-slate-950/80 border border-red-500/30 rounded-xl p-3 max-h-48 overflow-y-auto">
-                {withoutData?.leaked_records && withoutData.leaked_records.length > 0 ? (
-                  <div className="space-y-2">
-                    {withoutData.leaked_records.map((item, idx) => (
-                      <div key={idx} className="p-2 bg-red-950/40 border border-red-800/40 rounded text-xs font-mono text-red-200">
-                        <pre className="whitespace-pre-wrap">{JSON.stringify(item, null, 2)}</pre>
-                      </div>
-                    ))}
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-red-500/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-red-500/20 rounded-lg text-red-400 border border-red-500/30">
+                    <ShieldAlert className="w-6 h-6" />
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic py-2">No rows returned or syntax error thrown.</p>
-                )}
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-red-400">Baseline System</span>
+                    <h3 className="text-base md:text-lg font-extrabold text-red-200">WITHOUT OUR LAYER (VULNERABLE)</h3>
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-red-500/20 text-red-300 font-mono text-xs font-bold rounded-full border border-red-500/30">
+                  Score: {withoutData?.security_score || 'F (CRITICAL)'}
+                </span>
+              </div>
+
+              {/* Status Alert Box */}
+              <div className="p-3 bg-red-900/30 border border-red-600/40 rounded-xl mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-red-300 text-xs font-semibold">
+                  <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <span>Status: <strong className="text-white font-mono">{withoutData?.security_status || 'BREACH_DETECTED'}</strong></span>
+                </div>
+                <span className="text-[11px] font-mono text-red-400">Latency: {withoutData?.latency_ms || '14.2'}ms</span>
+              </div>
+
+              {/* Executed Query */}
+              <div className="mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Raw Concatenated SQL Sent to PostgreSQL:</span>
+                <div className="p-3 bg-slate-950/90 border border-red-900/50 rounded-xl font-mono text-xs text-red-300 overflow-x-auto">
+                  <code>{withoutData?.executed_query || `SELECT * FROM users_user WHERE email = '${customPayload}'`}</code>
+                </div>
+              </div>
+
+              {/* Leaked Records Table */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Exfiltrated Database Rows Leaked: ({withoutData?.leaked_records?.length || 0})
+                  </span>
+                  <span className="text-[10px] text-red-400 uppercase font-semibold">Data Breach Active</span>
+                </div>
+
+                <div className="bg-slate-950/90 border border-red-500/30 rounded-xl p-3 max-h-48 overflow-y-auto">
+                  {withoutData?.leaked_records && withoutData.leaked_records.length > 0 ? (
+                    <div className="space-y-2">
+                      {withoutData.leaked_records.map((item, idx) => (
+                        <div key={idx} className="p-2 bg-red-950/40 border border-red-800/40 rounded text-xs font-mono text-red-200">
+                          <pre className="whitespace-pre-wrap">{JSON.stringify(item, null, 2)}</pre>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 italic py-2">No rows returned or syntax error thrown.</p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Execution Telemetry Log */}
-            <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Vulnerability Telemetry:</span>
+            <div className="mt-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Vulnerability Audit Trace:</span>
               <div className="space-y-1.5 text-xs font-mono text-red-300/90 bg-slate-950/60 p-3 rounded-xl border border-red-900/30">
                 {withoutData?.pipeline_telemetry?.map((log, i) => (
                   <div key={i} className="flex items-start gap-1.5">
@@ -432,76 +527,76 @@ export default function SecurityLabPage() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-emerald-950/20 border-2 border-emerald-500/40 rounded-2xl backdrop-blur-xl shadow-2xl relative overflow-hidden"
+            className="p-6 bg-emerald-950/20 border-2 border-emerald-500/40 rounded-2xl backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-            
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-500/20">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 border border-emerald-500/30">
-                  <ShieldCheck className="w-6 h-6" />
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-500/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 border border-emerald-500/30">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">Zero-Trust Protected</span>
+                    <h3 className="text-base md:text-lg font-extrabold text-emerald-200">WITH SENTINDB LAYER (PROTECTED)</h3>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">Zero-Trust Protected</span>
-                  <h3 className="text-lg font-extrabold text-emerald-200">WITH SENTINDB LAYER (PROTECTED)</h3>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold rounded-full border border-emerald-500/30 flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-emerald-400" />
-                Score: {withData?.security_score || 'A+ (IMMUNE)'}
-              </span>
-            </div>
-
-            {/* Status Alert Box */}
-            <div className="p-3 bg-emerald-900/30 border border-emerald-600/40 rounded-xl mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span>Status: <strong className="text-white font-mono">{withData?.security_status || 'THREAT_NEUTRALIZED'}</strong></span>
-              </div>
-              <span className="text-[11px] font-mono text-emerald-300">Latency Overhead: {withData?.latency_ms || '0.8'}ms</span>
-            </div>
-
-            {/* Sanitized / Parameterized Query */}
-            <div className="mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">SentinDB Normalized AST Query:</span>
-              <div className="p-3 bg-slate-950/90 border border-emerald-900/50 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto">
-                <code>{withData?.executed_query || 'SELECT id, full_name, email, role FROM users_user WHERE email = %s'}</code>
-              </div>
-            </div>
-
-            {/* Defense Result Output */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5" />
-                  Protected Output Stream: ({withData?.records_leaked_count || 0} Leaked)
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold rounded-full border border-emerald-500/30 flex items-center gap-1">
+                  <Award className="w-3.5 h-3.5 text-emerald-400" />
+                  Score: {withData?.security_score || 'A+ (IMMUNE)'}
                 </span>
-                <span className="text-[10px] text-emerald-400 uppercase font-semibold">Zero Data Exposure</span>
               </div>
 
-              <div className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-3 max-h-48 overflow-y-auto">
-                {withData?.records_leaked_count === 0 ? (
-                  <div className="py-4 text-center">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
-                    <p className="text-xs font-bold text-emerald-300">Exploit Neutralized at Gateway Edge</p>
-                    <p className="text-[11px] text-slate-400">Database Engine protected against AST alteration.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {withData?.leaked_records?.map((item, idx) => (
-                      <div key={idx} className="p-2 bg-emerald-950/40 border border-emerald-800/40 rounded text-xs font-mono text-emerald-200">
-                        <pre className="whitespace-pre-wrap">{JSON.stringify(item, null, 2)}</pre>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Status Alert Box */}
+              <div className="p-3 bg-emerald-900/30 border border-emerald-600/40 rounded-xl mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Status: <strong className="text-white font-mono">{withData?.security_status || 'THREAT_NEUTRALIZED'}</strong></span>
+                </div>
+                <span className="text-[11px] font-mono text-emerald-300">Latency Overhead: {withData?.latency_ms || '0.8'}ms</span>
+              </div>
+
+              {/* Sanitized / Parameterized Query */}
+              <div className="mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">SentinDB Normalized AST Parameterized Query:</span>
+                <div className="p-3 bg-slate-950/90 border border-emerald-900/50 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto">
+                  <code>{withData?.executed_query || 'SELECT id, full_name, email, role FROM users_user WHERE email = %s'}</code>
+                </div>
+              </div>
+
+              {/* Defense Result Output */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5" />
+                    Protected Output Stream: ({withData?.records_leaked_count || 0} Leaked)
+                  </span>
+                  <span className="text-[10px] text-emerald-400 uppercase font-semibold">Zero Data Exposure</span>
+                </div>
+
+                <div className="bg-slate-950/90 border border-emerald-500/30 rounded-xl p-3 max-h-48 overflow-y-auto">
+                  {withData?.records_leaked_count === 0 ? (
+                    <div className="py-4 text-center">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
+                      <p className="text-xs font-bold text-emerald-300">Exploit Neutralized at Gateway Edge</p>
+                      <p className="text-[11px] text-slate-400">Database Engine protected against AST alteration.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {withData?.leaked_records?.map((item, idx) => (
+                        <div key={idx} className="p-2 bg-emerald-950/40 border border-emerald-800/40 rounded text-xs font-mono text-emerald-200">
+                          <pre className="whitespace-pre-wrap">{JSON.stringify(item, null, 2)}</pre>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Execution Telemetry Log */}
-            <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">SentinDB Gateway Telemetry:</span>
+            <div className="mt-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">SentinDB Interceptor Trace:</span>
               <div className="space-y-1.5 text-xs font-mono text-emerald-300/90 bg-slate-950/60 p-3 rounded-xl border border-emerald-900/30">
                 {withData?.pipeline_telemetry?.map((log, i) => (
                   <div key={i} className="flex items-start gap-1.5">
@@ -515,7 +610,7 @@ export default function SecurityLabPage() {
 
         </div>
 
-        {/* IEEE Architectural Defense Summary Card */}
+        {/* IEEE Technical Defense Architecture Reference */}
         <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl">
           <h3 className="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-2">
             <Cpu className="w-4 h-4" />
@@ -526,14 +621,14 @@ export default function SecurityLabPage() {
             <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
               <h4 className="font-bold text-white mb-1">1. AST Query Tokenizer</h4>
               <p className="text-slate-400 leading-relaxed">
-                Deconstructs incoming query parameters into Abstract Syntax Trees before DBMS dispatch, neutralizing SQL clause injection (`OR 1=1`, `UNION`) in $< 1\text{ms}$.
+                Deconstructs incoming query parameters into Abstract Syntax Trees before DBMS dispatch, neutralizing SQL clause injection in under 1ms.
               </p>
             </div>
 
             <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
               <h4 className="font-bold text-white mb-1">2. Dynamic ABAC Matrix</h4>
               <p className="text-slate-400 leading-relaxed">
-                Evaluates real-time clearance tuples `(Role, Resource Classification, Action)` to block lateral privilege creep and unauthorized table inspection.
+                Evaluates real-time clearance tuples (Role, Resource Classification, Action) to block lateral privilege creep and unauthorized table inspection.
               </p>
             </div>
 
