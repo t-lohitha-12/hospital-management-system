@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IEEE Query Quest 2026 - Presentation Script</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff; --bg-alt: #f8f9fa; --bg-code: #111827; 
+      --border: #e5e7eb; --border-light: #f3f4f6;
+      --text: #111827; --text-muted: #6b7280; --text-dim: #9ca3af;
+      --blue: #2563eb; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+      --mono: 'JetBrains Mono', monospace; --sans: 'Inter', -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg-alt); color: var(--text); line-height: 1.6; font-size: 15px; -webkit-font-smoothing: antialiased; padding: 40px; }
+    .container { max-width: 900px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 56px 72px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); margin-bottom: 24px; text-align: center; }
+    h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 40px 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 24px 0 12px 0; }
+    p { color: var(--text-muted); margin-bottom: 16px; line-height: 1.7; }
+    strong { color: var(--text); font-weight: 600; }
+    .speech { background: var(--blue-bg); border-left: 4px solid var(--blue); padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-style: italic; color: #1e3a8a; }
+    .qa-box { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    .qa-box .q { font-weight: 700; color: var(--text); margin-bottom: 8px; font-size: 15px; }
+    .qa-box .a { color: var(--text-muted); margin-bottom: 0; font-size: 14.5px; }
+    ul, ol { margin-bottom: 16px; padding-left: 24px; color: var(--text-muted); }
+    li { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>IEEE Query Quest 2026<br><span style="font-size: 18px; color: var(--text-muted); font-weight: 500;">Presentation Script & Q&A Guide</span></h1>
+
+    <h2>1. The Introduction (Hooking the Judges)</h2>
+    <div class="speech">
+      "Good morning respected judges. Welcome to our presentation. Today, we are not just presenting a Hospital Management System. We are presenting a highly secure, zero-trust healthcare platform protected by our custom 'SentinDB Security Layer'. Healthcare data is incredibly sensitive, yet basic SQL Injection and Privilege Creep remain the leading causes of data breaches in modern fintech and medical apps. Our project solves this."
+    </div>
+
+    <h2>2. Explaining What You Did (The Theory)</h2>
+    <p><strong>Explain the core problem:</strong> Most applications take user input and trust it blindly. If a user types malicious SQL code into an email field, the database might execute it, leaking patient data.</p>
+    <p><strong>Explain your solution (SentinDB):</strong></p>
+    <ul>
+      <li>We built an <strong>AST Query Tokenizer</strong>: It intercepts the query before it hits the database and uses parameterized binding. This means input is treated strictly as text, not executable code.</li>
+      <li>We built a <strong>Dynamic ABAC Matrix</strong> (Attribute-Based Access Control): It stops Privilege Creep by evaluating a 3-tuple <code>(Subject, Resource, Action)</code> before allowing access to sensitive routes like doctor earnings or audit logs.</li>
+    </ul>
+
+    <h2>3. The Practical Demonstration (The Security Lab)</h2>
+    <div class="speech">
+      "Sir, to clearly demonstrate how our defense works, we built an interactive Security Lab directly into our app. Let me show you a live simulation."
+    </div>
+    <p><strong>Step-by-step actions on stage:</strong></p>
+    <ol>
+      <li>Open the Security Lab page.</li>
+      <li><strong>Show SQL Injection:</strong> Click the "Tautology Bypass" preset (<code>' OR '1'='1</code>).
+        <ul>
+          <li>Point to the red <strong>"Without Layer"</strong> side: <em>"As you can see, a standard unprotected query blindly concatenates the string. The database evaluates 1=1 as TRUE and leaks the entire user table."</em></li>
+          <li>Point to the green <strong>"With SentinDB"</strong> side: <em>"But with our SentinDB layer, the AST Tokenizer intercepts the payload, parameterizes it as `%s`, and neutralizes the threat completely. Zero rows are leaked."</em></li>
+        </ul>
+      </li>
+      <li><strong>Show Privilege Creep:</strong> Switch to the "Privilege Creep" tab. Select "Patient to Doctor Earnings".
+        <ul>
+          <li>Point to the red side: <em>"Without dynamic ABAC, a logged-in patient might manipulate the URL to access doctor salaries."</em></li>
+          <li>Point to the green side: <em>"Our ABAC matrix evaluates the patient's context and blocks the lateral escalation at the gateway level."</em></li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2>4. Expected Judge Questions & How to Answer Them</h2>
+    
+    <div class="qa-box">
+      <div class="q">Judge: "How does your SentinDB layer actually stop the SQL Injection?"</div>
+      <div class="a"><strong>Answer:</strong> "Sir, we use Parameterized Queries combined with an AST (Abstract Syntax Tree) tokenizer. Instead of concatenating strings directly into the SQL command, our layer sends the SQL structure and the user data separately to the database driver. The database treats the malicious input strictly as a literal string value, completely stripping its ability to execute as code."</div>
+    </div>
+
+    <div class="qa-box">
+      <div class="q">Judge: "Why did you build an ABAC matrix instead of standard RBAC (Role-Based Access Control)?"</div>
+      <div class="a"><strong>Answer:</strong> "RBAC is static and prone to Privilege Creep. ABAC (Attribute-Based Access Control) evaluates the dynamic context—the Subject (who is asking), the Resource (what they want), and the Action (what they want to do). This completely neutralizes lateral escalation because access is evaluated per-request based on strict boundaries."</div>
+    </div>
+
+    <div class="qa-box">
+      <div class="q">Judge: "Is this simulation running against real tables?"</div>
+      <div class="a"><strong>Answer:</strong> "Yes, sir. It targets our actual `users_user` table in Supabase PostgreSQL. The 'Without Layer' simulation intentionally uses an insecure raw `cursor.execute()` string concatenation to prove the vulnerability exists, while the 'With Layer' uses our secure parameterized pipeline on the exact same database."</div>
+    </div>
+
+    <h2>5. Closing the Presentation</h2>
+    <div class="speech">
+      "In conclusion, our Hospital Management System doesn't just manage appointments; it strictly defends patient privacy at the database layer. By neutralizing SQL injection and Privilege Creep, we've built a robust, zero-trust architecture. Thank you."
+    </div>
+  </div>
+</body>
+</html>
