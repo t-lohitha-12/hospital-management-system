@@ -60,7 +60,7 @@ class SentinDBInterceptor:
 
     @classmethod
     def _handle_sqli_scenario(cls, payload, security_enabled, start_time):
-        raw_query = f"SELECT id, full_name, email, role FROM users_user WHERE email = '{payload}'"
+        raw_query = f"SELECT id, full_name, email, role FROM users_without_layer WHERE email = '{payload}'"
 
         if not security_enabled:
             # 🔴 VULNERABLE MODE: Executes raw concatenated SQL string
@@ -113,7 +113,7 @@ class SentinDBInterceptor:
                     'mode': 'PROTECTED (SentinDB Layer: ACTIVE)',
                     'security_status': 'THREAT_NEUTRALIZED',
                     'security_score': 'A+ (IMMUNE)',
-                    'executed_query': 'SELECT id, full_name, email, role FROM users_user WHERE email = %s [PARAMETERIZED]',
+                    'executed_query': 'SELECT id, full_name, email, role FROM users_with_layer WHERE email = %s [PARAMETERIZED]',
                     'bound_parameter': payload,
                     'threat_signature': detected_threats,
                     'records_leaked_count': 0,
@@ -129,7 +129,7 @@ class SentinDBInterceptor:
             else:
                 # Safe input executed with parameterized driver
                 with connection.cursor() as cursor:
-                    cursor.execute("SELECT id, full_name, email, role FROM users_user WHERE email = %s", [payload])
+                    cursor.execute("SELECT id, full_name, email, role FROM users_with_layer WHERE email = %s", [payload])
                     columns = [col[0] for col in cursor.description]
                     rows = cursor.fetchall()
                     data = [dict(zip(columns, row)) for row in rows]
@@ -138,7 +138,7 @@ class SentinDBInterceptor:
                     'mode': 'PROTECTED (SentinDB Layer: ACTIVE)',
                     'security_status': 'SAFE_QUERY_PROCESSED',
                     'security_score': 'A+ (IMMUNE)',
-                    'executed_query': 'SELECT id, full_name, email, role FROM users_user WHERE email = %s',
+                    'executed_query': 'SELECT id, full_name, email, role FROM users_with_layer WHERE email = %s',
                     'bound_parameter': payload,
                     'records_leaked_count': len(data),
                     'leaked_records': data,
@@ -159,22 +159,23 @@ class SentinDBInterceptor:
         
         # We will query actual tables instead of returning a python dictionary.
         # This proves to the judges that the SentinDB layer operates on real database data.
-        def fetch_real_data(table_name):
+        def fetch_real_data(table_name, is_secure):
+            suffix = "_with_layer" if is_secure else "_without_layer"
             try:
                 with connection.cursor() as cursor:
                     if table_name == 'admin_audit_logs':
                         # Join with users to get the operator email instead of ID
-                        query = """
-                            SELECT core_auditlog.id as log_id, action, users_user.email as operator, timestamp 
-                            FROM core_auditlog 
-                            LEFT JOIN users_user ON core_auditlog.user_id = users_user.id
+                        query = f"""
+                            SELECT core_auditlog{suffix}.id as log_id, action, users_{suffix}.email as operator, timestamp 
+                            FROM core_auditlog{suffix} 
+                            LEFT JOIN users_{suffix} ON core_auditlog{suffix}.user_id = users_{suffix}.id
                             ORDER BY timestamp DESC LIMIT 5
                         """
                         cursor.execute(query)
                     elif table_name == 'doctor_earnings':
-                        cursor.execute("SELECT doctor_name, specialization, monthly_payout, bank_ref FROM securitylab_doctorearnings LIMIT 5")
+                        cursor.execute(f"SELECT doctor_name, specialization, monthly_payout, bank_ref FROM securitylab_doctorearnings{suffix} LIMIT 5")
                     elif table_name == 'system_settings':
-                        cursor.execute("SELECT config_key, config_value FROM securitylab_systemsettings LIMIT 5")
+                        cursor.execute(f"SELECT config_key, config_value FROM securitylab_systemsettings{suffix} LIMIT 5")
                     else:
                         return []
                         
@@ -185,7 +186,7 @@ class SentinDBInterceptor:
                 # Fallback if table is missing or errors out during real-time query
                 return [{'error': f'Database query failed: {str(e)}. (Did you create the tables in Supabase?)'}]
 
-        real_confidential_data = fetch_real_data(target_resource)
+        real_confidential_data = fetch_real_data(target_resource, security_enabled)
 
         if not security_enabled:
             # 🔴 VULNERABLE: Over-permissive / stale RBAC allows access
