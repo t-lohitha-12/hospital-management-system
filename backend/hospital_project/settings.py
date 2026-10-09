@@ -80,11 +80,42 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hospital_project.wsgi.application'
 
 # 7. Database Configuration
-DATABASES = {
-    'default': dj_database_url.config(
-        default=env('DATABASE_URL')
-    )
-}
+db_url_raw = os.environ.get('DATABASE_URL') or env('DATABASE_URL', default=None)
+if db_url_raw:
+    db_url_clean = str(db_url_raw).strip().strip("'").strip('"')
+    try:
+        DATABASES = {
+            'default': dj_database_url.parse(db_url_clean, conn_max_age=600)
+        }
+    except Exception:
+        import re
+        from urllib.parse import unquote
+        match = re.match(r'^(?:postgres|postgresql)://([^:]+):(.*)@([^:/]+)(?::(\d+))?/(.*)$', db_url_clean)
+        if match:
+            u_user, u_pass, u_host, u_port, u_db = match.groups()
+            if u_db and '?' in u_db:
+                u_db = u_db.split('?')[0]
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.postgresql',
+                    'NAME': u_db or 'postgres',
+                    'USER': unquote(u_user),
+                    'PASSWORD': unquote(u_pass),
+                    'HOST': u_host,
+                    'PORT': u_port or '5432',
+                }
+            }
+        else:
+            DATABASES = {
+                'default': dj_database_url.config(default=db_url_clean)
+            }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # 8. Authentication
 AUTH_USER_MODEL = 'users.User'
