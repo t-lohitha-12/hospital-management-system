@@ -352,44 +352,59 @@ class CreateAdminUserView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        admin_email = os.environ.get('ADMIN_EMAIL') or request.GET.get('email') or 'admin@hospital.com'
-        admin_password = os.environ.get('ADMIN_PASSWORD') or request.GET.get('password') or 'Admin@12345'
-        admin_full_name = os.environ.get('ADMIN_FULL_NAME') or 'Hospital Administrator'
+        import traceback
+        from django.core.management import call_command
+        
+        try:
+            # 1. Run database migrations first to ensure all tables exist in Supabase
+            call_command('migrate', interactive=False)
 
-        # 1. Create or Update the Admin user
-        admin_user = User.objects.filter(email=admin_email).first()
-        if admin_user:
-            admin_user.set_password(admin_password)
-            admin_user.role = 'admin'
-            admin_user.is_staff = True
-            admin_user.is_superuser = True
-            admin_user.is_active = True
-            admin_user.full_name = admin_full_name
-            admin_user.save()
-            admin_status = f"Updated existing admin user ({admin_email}) with the password '{admin_password}'"
-        else:
-            User.objects.create_superuser(
-                email=admin_email,
-                password=admin_password,
-                full_name=admin_full_name,
-                role='admin'
-            )
-            admin_status = f"Created new admin user ({admin_email}) with password '{admin_password}'"
+            admin_email = os.environ.get('ADMIN_EMAIL') or request.GET.get('email') or 'admin@hospital.com'
+            admin_password = os.environ.get('ADMIN_PASSWORD') or request.GET.get('password') or 'Admin@12345'
+            admin_full_name = os.environ.get('ADMIN_FULL_NAME') or 'Hospital Administrator'
 
-        # 2. Seed default doctor licenses if none exist
-        created_licenses = []
-        for lic_num in ['DOC-1001', 'DOC-1002', 'DOC-1003']:
-            lic, created = DoctorLicense.objects.get_or_create(license_number=lic_num)
-            if created or not lic.is_used:
-                created_licenses.append(lic_num)
+            # 2. Create or Update the Admin user
+            admin_user = User.objects.filter(email=admin_email).first()
+            if admin_user:
+                admin_user.set_password(admin_password)
+                admin_user.role = 'admin'
+                admin_user.is_staff = True
+                admin_user.is_superuser = True
+                admin_user.is_active = True
+                admin_user.full_name = admin_full_name
+                admin_user.save()
+                admin_status = f"Updated existing admin user ({admin_email}) with the password '{admin_password}'"
+            else:
+                User.objects.create_superuser(
+                    email=admin_email,
+                    password=admin_password,
+                    full_name=admin_full_name,
+                    role='admin'
+                )
+                admin_status = f"Created new admin user ({admin_email}) with password '{admin_password}'"
 
-        return Response({
-            "status": "SUCCESS",
-            "admin_status": admin_status,
-            "login_credentials": {
-                "email": admin_email,
-                "password": admin_password,
-                "role": "admin"
-            },
-            "sample_doctor_licenses_for_testing": created_licenses
-        }, status=status.HTTP_200_OK)
+            # 3. Seed default doctor licenses if none exist
+            created_licenses = []
+            for lic_num in ['DOC-1001', 'DOC-1002', 'DOC-1003']:
+                lic, created = DoctorLicense.objects.get_or_create(license_number=lic_num)
+                if created or not lic.is_used:
+                    created_licenses.append(lic_num)
+
+            return Response({
+                "status": "SUCCESS",
+                "database_migration": "All tables created/verified successfully in Supabase",
+                "admin_status": admin_status,
+                "login_credentials": {
+                    "email": admin_email,
+                    "password": admin_password,
+                    "role": "admin"
+                },
+                "sample_doctor_licenses_for_testing": created_licenses
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": "ERROR",
+                "error_message": str(e),
+                "traceback": traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
