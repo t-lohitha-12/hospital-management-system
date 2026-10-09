@@ -348,42 +348,48 @@ class DoctorLicenseViewSet(viewsets.ModelViewSet):
 
 
 class CreateAdminUserView(APIView):
-    # Allow anyone to access this specific URL for the one-time setup.
+    # Allow anyone to access this specific URL for setup.
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Read the admin credentials from environment variables
-        admin_email = os.environ.get('ADMIN_EMAIL')
-        admin_password = os.environ.get('ADMIN_PASSWORD')
-        admin_full_name = os.environ.get('ADMIN_FULL_NAME', 'Admin')
+        admin_email = os.environ.get('ADMIN_EMAIL') or request.GET.get('email') or 'admin@hospital.com'
+        admin_password = os.environ.get('ADMIN_PASSWORD') or request.GET.get('password') or 'Admin@12345'
+        admin_full_name = os.environ.get('ADMIN_FULL_NAME') or 'Hospital Administrator'
 
-        # Check if the required variables are set
-        if not admin_email or not admin_password:
-            return Response(
-                {"error": "ADMIN_EMAIL and ADMIN_PASSWORD environment variables must be set on Render."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        # Check if the admin user already exists
-        if User.objects.filter(email=admin_email).exists():
-            return Response(
-                {"message": f"Admin user with email {admin_email} already exists."},
-                status=status.HTTP_200_OK
-            )
-
-        # If the user does not exist, create them
-        try:
+        # 1. Create or Update the Admin user
+        admin_user = User.objects.filter(email=admin_email).first()
+        if admin_user:
+            admin_user.set_password(admin_password)
+            admin_user.role = 'admin'
+            admin_user.is_staff = True
+            admin_user.is_superuser = True
+            admin_user.is_active = True
+            admin_user.full_name = admin_full_name
+            admin_user.save()
+            admin_status = f"Updated existing admin user ({admin_email}) with the password '{admin_password}'"
+        else:
             User.objects.create_superuser(
                 email=admin_email,
                 password=admin_password,
-                full_name=admin_full_name
+                full_name=admin_full_name,
+                role='admin'
             )
-            return Response(
-                {"message": f"SUCCESS: Admin user {admin_email} created. You should now remove this URL endpoint."},
-                status=status.HTTP_201_CREATED
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"An error occurred while creating the admin user: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            admin_status = f"Created new admin user ({admin_email}) with password '{admin_password}'"
+
+        # 2. Seed default doctor licenses if none exist
+        created_licenses = []
+        for lic_num in ['DOC-1001', 'DOC-1002', 'DOC-1003']:
+            lic, created = DoctorLicense.objects.get_or_create(license_number=lic_num)
+            if created or not lic.is_used:
+                created_licenses.append(lic_num)
+
+        return Response({
+            "status": "SUCCESS",
+            "admin_status": admin_status,
+            "login_credentials": {
+                "email": admin_email,
+                "password": admin_password,
+                "role": "admin"
+            },
+            "sample_doctor_licenses_for_testing": created_licenses
+        }, status=status.HTTP_200_OK)
