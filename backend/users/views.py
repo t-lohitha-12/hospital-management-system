@@ -63,20 +63,34 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        refresh = RefreshToken.for_user(user)
+        if not serializer.is_valid():
+            error_msg = 'Invalid email/phone or password.'
+            if 'non_field_errors' in serializer.errors and serializer.errors['non_field_errors']:
+                error_msg = str(serializer.errors['non_field_errors'][0])
+            elif 'identifier' in serializer.errors:
+                error_msg = str(serializer.errors['identifier'][0])
+            elif 'password' in serializer.errors:
+                error_msg = str(serializer.errors['password'][0])
+            return Response({'detail': error_msg, 'errors': serializer.errors}, status=status.HTTP_401_UNAUTHORIZED)
 
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user': {
-                'id': user.id,
-                'full_name': user.full_name,
-                'email': user.email,
-                'role': user.role,
-            }
-        }, status=status.HTTP_200_OK)
+        user = serializer.validated_data.get('user')
+        if not user:
+            return Response({'detail': 'Invalid email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'id': user.id,
+                    'full_name': user.full_name or user.email,
+                    'email': user.email,
+                    'role': user.role or 'patient',
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'detail': f'Token generation error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 class DoctorRegistrationView(APIView):
