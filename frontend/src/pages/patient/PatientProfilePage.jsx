@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LoaderCircle, Edit, Mail, Phone, MapPin, ShieldAlert } from 'lucide-react';
 import EditPatientProfileModal from './EditPatientProfileModal'; 

@@ -1,0 +1,85 @@
+23:50:39.309 Running build in Washington, D.C., USA (East) – iad1
+23:50:39.310 Build machine configuration: 2 cores, 8 GB
+23:50:39.386 Cloning github.com/t-lohitha-12/hospital-management-system (Branch: main, Commit: bdcc5b4)
+23:50:39.388 Skipping build cache, deployment was triggered without cache.
+23:50:40.718 Cloning completed: 1.331s
+23:50:41.835 Running "vercel build"
+23:50:41.857 Vercel CLI 62.7.0
+23:50:43.169 Installing dependencies...
+23:50:48.663 npm warn deprecated w3c-hr-time@1.0.2: Use your platform's native performance.now() and performance.timeOrigin.
+23:50:48.792 npm warn deprecated stable@0.1.8: Modern JS already guarantees Array#sort() is a stable sort, so this library is deprecated. See the compatibility table on MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility
+23:50:49.274 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+23:50:49.305 npm warn deprecated rollup-plugin-terser@7.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-terser
+23:50:49.377 npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+23:50:49.431 npm warn deprecated q@1.5.1: You or someone you depend on is using Q, the JavaScript Promise library that gave JavaScript developers strong feelings about promises. They can almost certainly migrate to the native JavaScript promise now. Thank you literally everyone for joining me in this bet against the odds. Be excellent to each other.
+23:50:49.443 npm warn deprecated
+23:50:49.448 npm warn deprecated (For a CapTP with native promises, see @endo/eventual-send and @endo/captp)
+23:50:49.470 npm warn deprecated workbox-cacheable-response@6.6.0: workbox-background-sync@6.6.0
+23:50:49.840 npm warn deprecated workbox-google-analytics@6.6.0: It is not compatible with newer versions of GA starting with v4, as long as you are using GAv3 it should be ok, but the package is not longer being maintained
+23:50:50.808 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+23:50:50.977 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+23:50:52.103 npm warn deprecated domexception@2.0.1: Use your platform's native DOMException instead
+23:50:52.661 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+23:50:53.343 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+23:50:53.504 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+23:50:53.960 npm warn deprecated @babel/plugin-proposal-optional-chaining@7.21.0: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-optional-chaining instead.
+23:50:53.994 npm warn deprecated @babel/plugin-proposal-private-methods@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
+23:50:54.032 npm warn deprecated @babel/plugin-proposal-nullish-coalescing-operator@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-nullish-coalescing-operator instead.
+23:50:54.034 npm warn deprecated @babel/plugin-proposal-class-properties@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-class-properties instead.
+23:50:54.036 npm warn deprecated @babel/plugin-proposal-numeric-separator@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-numeric-separator instead.
+23:50:54.902 npm warn deprecated @babel/plugin-proposal-private-property-in-object@7.21.11: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-property-in-object instead.
+23:50:55.499 npm warn deprecated svgo@1.3.2: This SVGO version is no longer supported. Upgrade to v2.x.x.
+23:50:58.132 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+23:51:02.946 
+23:51:02.946 added 1403 packages in 20s
+23:51:02.947 
+23:51:02.947 273 packages are looking for funding
+23:51:02.947   run `npm fund` for details
+23:51:02.948 npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+23:51:02.948 npm warn install-scripts   core-js@3.43.0 (postinstall: node -e "try{require('./postinstall')}catch(e){}")
+23:51:02.948 npm warn install-scripts   core-js-pure@3.43.0 (postinstall: node -e "try{require('./postinstall')}catch(e){}")
+23:51:02.948 npm warn install-scripts
+23:51:02.948 npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+23:51:02.950 npm notice
+23:51:02.950 npm notice New major version of npm available! 11.19.0 -> 12.2.0
+23:51:02.950 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+23:51:02.950 npm notice To update run: npm install -g npm@12.2.0
+23:51:02.950 npm notice
+23:51:03.086 Running "npm run build"
+23:51:03.338 
+23:51:03.338 > frontend@0.1.0 build
+23:51:03.338 > react-scripts build
+23:51:03.338 
+23:51:04.897 (node:90) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+23:51:04.897 (Use `node --trace-deprecation ...` to show where the warning was created)
+23:51:05.247 Creating an optimized production build...
+23:51:05.379 Browserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+23:51:05.379   npx update-browserslist-db@latest
+23:51:05.379   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+23:51:54.871 Browserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+23:51:54.872   npx update-browserslist-db@latest
+23:51:54.873   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+23:51:57.142 
+23:51:57.142 Treating warnings as errors because process.env.CI = true.
+23:51:57.143 Most CI servers set it automatically.
+23:51:57.143 
+23:51:57.144 Failed to compile.
+23:51:57.145 
+23:51:57.145 [eslint] 
+23:51:57.145 src/components/Footer.jsx
+23:51:57.146   Line 26:15:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+23:51:57.146   Line 27:15:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+23:51:57.146   Line 28:15:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+23:51:57.146   Line 29:15:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+23:51:57.146 
+23:51:57.146 src/pages/HelpPage.jsx
+23:51:57.147   Line 16:3:  'X' is defined but never used  no-unused-vars
+23:51:57.147 
+23:51:57.147 src/pages/auth/ForgotPasswordPage.jsx
+23:51:57.147   Line 7:8:  'axios' is defined but never used  no-unused-vars
+23:51:57.147 
+23:51:57.147 src/pages/patient/PatientProfilePage.jsx
+23:51:57.147   Line 1:27:  'useEffect' is defined but never used  no-unused-vars
+23:51:57.149 
+23:51:57.149 
+23:51:57.282 Error: Command "npm run build" exited with 1

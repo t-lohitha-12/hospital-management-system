@@ -4,7 +4,6 @@ import React, { useState, useRef } from 'react';
 import {useNavigate } from 'react-router-dom';
 import AuthLayout from './AuthLayout';
 import { Mail, CheckCircle, LoaderCircle } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axiosInstance'; 
 

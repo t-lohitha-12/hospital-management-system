@@ -1,0 +1,150 @@
+2026-10-09T18:20:08.260418053Z     self.setup(app)
+2026-10-09T18:20:08.260421063Z     ~~~~~~~~~~^^^^^
+2026-10-09T18:20:08.260423624Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/arbiter.py", line 117, in setup
+2026-10-09T18:20:08.260426434Z     self.app.wsgi()
+2026-10-09T18:20:08.260429284Z     ~~~~~~~~~~~~~^^
+2026-10-09T18:20:08.260431955Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/base.py", line 66, in wsgi
+2026-10-09T18:20:08.260435455Z     self.callable = self.load()
+2026-10-09T18:20:08.260438665Z                     ~~~~~~~~~^^
+2026-10-09T18:20:08.260441585Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+2026-10-09T18:20:08.260444276Z     return self.load_wsgiapp()
+2026-10-09T18:20:08.260446806Z            ~~~~~~~~~~~~~~~~~^^
+2026-10-09T18:20:08.260449806Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+2026-10-09T18:20:08.260454696Z     return util.import_app(self.app_uri)
+2026-10-09T18:20:08.260457617Z            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260461427Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/util.py", line 370, in import_app
+2026-10-09T18:20:08.260465347Z     mod = importlib.import_module(module)
+2026-10-09T18:20:08.260480618Z   File "/opt/render/project/python/Python-3.14.3/lib/python3.14/importlib/__init__.py", line 88, in import_module
+2026-10-09T18:20:08.260484949Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-10-09T18:20:08.260487929Z            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260491099Z   File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+2026-10-09T18:20:08.2604944Z   File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+2026-10-09T18:20:08.26049643Z   File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+2026-10-09T18:20:08.2604983Z   File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+2026-10-09T18:20:08.26050025Z   File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+2026-10-09T18:20:08.26050212Z   File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+2026-10-09T18:20:08.260512881Z   File "/opt/render/project/src/backend/hospital_project/wsgi.py", line 16, in <module>
+2026-10-09T18:20:08.260514941Z     application = get_wsgi_application()
+2026-10-09T18:20:08.260516921Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+2026-10-09T18:20:08.260518871Z     django.setup(set_prefix=False)
+2026-10-09T18:20:08.260520792Z     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260530972Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/__init__.py", line 19, in setup
+2026-10-09T18:20:08.260533043Z     configure_logging(settings.LOGGING_CONFIG, settings.LOGGING)
+2026-10-09T18:20:08.260535083Z                       ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260537023Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 81, in __getattr__
+2026-10-09T18:20:08.260538953Z     self._setup(name)
+2026-10-09T18:20:08.260540943Z     ~~~~~~~~~~~^^^^^^
+2026-10-09T18:20:08.260542904Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 68, in _setup
+2026-10-09T18:20:08.260544813Z     self._wrapped = Settings(settings_module)
+2026-10-09T18:20:08.260546794Z                     ~~~~~~~~^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260548724Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 166, in __init__
+2026-10-09T18:20:08.260550694Z     mod = importlib.import_module(self.SETTINGS_MODULE)
+2026-10-09T18:20:08.260552564Z   File "/opt/render/project/python/Python-3.14.3/lib/python3.14/importlib/__init__.py", line 88, in import_module
+2026-10-09T18:20:08.260554494Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-10-09T18:20:08.260556385Z            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260558275Z   File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+2026-10-09T18:20:08.260560155Z   File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+2026-10-09T18:20:08.260562035Z   File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+2026-10-09T18:20:08.260564205Z   File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+2026-10-09T18:20:08.260566065Z   File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+2026-10-09T18:20:08.260567906Z   File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+2026-10-09T18:20:08.260569936Z   File "/opt/render/project/src/backend/hospital_project/settings.py", line 84, in <module>
+2026-10-09T18:20:08.260571816Z     'default': dj_database_url.config(
+2026-10-09T18:20:08.260573726Z                ~~~~~~~~~~~~~~~~~~~~~~^
+2026-10-09T18:20:08.260575666Z         default=env('DATABASE_URL')
+2026-10-09T18:20:08.260577556Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:08.260579436Z     )
+2026-10-09T18:20:08.260581347Z     ^
+2026-10-09T18:20:08.260583257Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/dj_database_url/__init__.py", line 147, in config
+2026-10-09T18:20:08.260585147Z     return parse(
+2026-10-09T18:20:08.260587077Z         s,
+2026-10-09T18:20:08.260589007Z     ...<5 lines>...
+2026-10-09T18:20:08.260590887Z         test_options,
+2026-10-09T18:20:08.260592737Z     )
+2026-10-09T18:20:08.260594628Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/dj_database_url/__init__.py", line 206, in parse
+2026-10-09T18:20:08.260596608Z     raise ParseError() from None
+2026-10-09T18:20:08.260599188Z dj_database_url.ParseError: This string is not a valid url, possibly because some of its parts is not properly urllib.parse.quote()'ed.
+2026-10-09T18:20:11.2245924Z ==> Exited with status 1
+2026-10-09T18:20:11.227582659Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-10-09T18:20:15.736471019Z ==> Running 'gunicorn hospital_project.wsgi'
+2026-10-09T18:20:22.230088089Z --- [INFO] Allowed Hosts: ['.onrender.com', 'localhost', '127.0.0.1', 'hospital-management-system-wdfn.onrender.com']
+2026-10-09T18:20:22.23220992Z Traceback (most recent call last):
+2026-10-09T18:20:22.320192562Z   File "/opt/render/project/src/.venv/bin/gunicorn", line 7, in <module>
+2026-10-09T18:20:22.320206603Z     sys.exit(run())
+2026-10-09T18:20:22.320209983Z              ~~~^^
+2026-10-09T18:20:22.320213443Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 66, in run
+2026-10-09T18:20:22.320217804Z     WSGIApplication("%(prog)s [OPTIONS] [APP_MODULE]", prog=prog).run()
+2026-10-09T18:20:22.320220944Z     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+2026-10-09T18:20:22.320223904Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/base.py", line 235, in run
+2026-10-09T18:20:22.320226784Z     super().run()
+2026-10-09T18:20:22.320229695Z     ~~~~~~~~~~~^^
+2026-10-09T18:20:22.320232625Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/base.py", line 71, in run
+2026-10-09T18:20:22.320235865Z     Arbiter(self).run()
+2026-10-09T18:20:22.320239055Z     ~~~~~~~^^^^^^
+2026-10-09T18:20:22.320241535Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/arbiter.py", line 57, in __init__
+2026-10-09T18:20:22.320243456Z     self.setup(app)
+2026-10-09T18:20:22.320245386Z     ~~~~~~~~~~^^^^^
+2026-10-09T18:20:22.320247306Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/arbiter.py", line 117, in setup
+2026-10-09T18:20:22.320249186Z     self.app.wsgi()
+2026-10-09T18:20:22.320251036Z     ~~~~~~~~~~~~~^^
+2026-10-09T18:20:22.320252987Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/base.py", line 66, in wsgi
+2026-10-09T18:20:22.320255167Z     self.callable = self.load()
+2026-10-09T18:20:22.320257027Z                     ~~~~~~~~~^^
+2026-10-09T18:20:22.320258887Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+2026-10-09T18:20:22.320260747Z     return self.load_wsgiapp()
+2026-10-09T18:20:22.320262627Z            ~~~~~~~~~~~~~~~~~^^
+2026-10-09T18:20:22.320265308Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+2026-10-09T18:20:22.320267438Z     return util.import_app(self.app_uri)
+2026-10-09T18:20:22.320269388Z            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+2026-10-09T18:20:22.320271368Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/gunicorn/util.py", line 370, in import_app
+2026-10-09T18:20:22.320273348Z     mod = importlib.import_module(module)
+2026-10-09T18:20:22.320275288Z   File "/opt/render/project/python/Python-3.14.3/lib/python3.14/importlib/__init__.py", line 88, in import_module
+2026-10-09T18:20:22.320277929Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-10-09T18:20:22.320281009Z            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.32029529Z   File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+2026-10-09T18:20:22.32029846Z   File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+2026-10-09T18:20:22.32030154Z   File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+2026-10-09T18:20:22.320304231Z   File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+2026-10-09T18:20:22.320306881Z   File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+2026-10-09T18:20:22.320310141Z   File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+2026-10-09T18:20:22.320324122Z   File "/opt/render/project/src/backend/hospital_project/wsgi.py", line 16, in <module>
+2026-10-09T18:20:22.320327442Z     application = get_wsgi_application()
+2026-10-09T18:20:22.320330513Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+2026-10-09T18:20:22.320333543Z     django.setup(set_prefix=False)
+2026-10-09T18:20:22.320336643Z     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.320344824Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/__init__.py", line 19, in setup
+2026-10-09T18:20:22.320348014Z     configure_logging(settings.LOGGING_CONFIG, settings.LOGGING)
+2026-10-09T18:20:22.320350924Z                       ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.320354095Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 81, in __getattr__
+2026-10-09T18:20:22.320357175Z     self._setup(name)
+2026-10-09T18:20:22.320360185Z     ~~~~~~~~~~~^^^^^^
+2026-10-09T18:20:22.320363156Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 68, in _setup
+2026-10-09T18:20:22.320366766Z     self._wrapped = Settings(settings_module)
+2026-10-09T18:20:22.320369406Z                     ~~~~~~~~^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.320371386Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/conf/__init__.py", line 166, in __init__
+2026-10-09T18:20:22.320373396Z     mod = importlib.import_module(self.SETTINGS_MODULE)
+2026-10-09T18:20:22.320375396Z   File "/opt/render/project/python/Python-3.14.3/lib/python3.14/importlib/__init__.py", line 88, in import_module
+2026-10-09T18:20:22.320378617Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-10-09T18:20:22.320381877Z            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.320386507Z   File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+2026-10-09T18:20:22.320389618Z   File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+2026-10-09T18:20:22.320392988Z   File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+2026-10-09T18:20:22.320396078Z   File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+2026-10-09T18:20:22.320399138Z   File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+2026-10-09T18:20:22.320401999Z   File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+2026-10-09T18:20:22.320403879Z   File "/opt/render/project/src/backend/hospital_project/settings.py", line 84, in <module>
+2026-10-09T18:20:22.320406419Z     'default': dj_database_url.config(
+2026-10-09T18:20:22.320409549Z                ~~~~~~~~~~~~~~~~~~~~~~^
+2026-10-09T18:20:22.32041262Z         default=env('DATABASE_URL')
+2026-10-09T18:20:22.32041584Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T18:20:22.32041893Z     )
+2026-10-09T18:20:22.32042192Z     ^
+2026-10-09T18:20:22.32042517Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/dj_database_url/__init__.py", line 147, in config
+2026-10-09T18:20:22.320428321Z     return parse(
+2026-10-09T18:20:22.320430451Z         s,
+2026-10-09T18:20:22.320432381Z     ...<5 lines>...
+2026-10-09T18:20:22.320434801Z         test_options,
+2026-10-09T18:20:22.320437951Z     )
+2026-10-09T18:20:22.320441022Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/dj_database_url/__init__.py", line 206, in parse
+2026-10-09T18:20:22.320444152Z     raise ParseError() from None
+2026-10-09T18:20:22.320451892Z dj_database_url.ParseError: This string is not a valid url, possibly because some of its parts is not properly urllib.parse.quote()'ed.[create_initial_admin.py#L0-22](textBlock;file:///c%3A/Users/kodur/Downloads/HMS/HMS/hospital-appointment-system/backend/users/management/commands/create_initial_admin.py#L0-22) 

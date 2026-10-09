@@ -13,7 +13,6 @@ import {
   BookOpen,
   MessageCircle,
   HeartPulse,
-  X,
   BrainCircuit,
   Shield,
   HelpCircle,
